@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <script src="https://unpkg.com/gsap@3/dist/gsap.min.js" type="text/javascript"></script>
+        <script src="https://unpkg.com/gsap@3.12.2/dist/Draggable.min.js" type="text/javascript"></script>
+        <title>Rotating Cube</title>
+        <style>
+            html, body, #dragger, #cube, .face {
+                width:100%;
+                height: 100%;
+                transform-style: preserve-3d;
+                user-select: none;
+            }
+
+            html, body {
+                overflow: hidden;
+            }
+
+            div {
+                position: absolute;
+            }
+
+            .container {
+                width: 300px;
+                height: 300px;
+                perspective: 750px;
+                left: 50%;
+                top: 50%;
+                transform: translate(-50%,-50%);
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <div id="cube">
+                <div class="face"></div>
+                <div class="face"></div>
+                <div class="face"></div>
+                <div class="face"></div>
+                <div class="face"></div>
+                <div class="face"></div>
+            </div>
+        </div>
+        <div id="dragger"></div>
+
+        <script>
+            var cube = document.querySelector('#cube');
+            let pos = {x: 0, y: 0}
+
+            gsap.timeline()
+                .set(".face", { // apply transforms to each face of the cube
+                    rotateY: (i) => [0, 90, 180, 270, 0, 0][i],
+                    rotateX: (i) => [0, 0, 0, 0, 90, -90][i],
+                    transformOrigin: "50% 50% -150px",
+                    z: 150,
+                    background: (i) => 'url(https://picsum.photos/id/'+(i + 20) + '/300/) center'
+                })
+                .set(dragger, { opacity: 0 }) // make the drag layer invisible
+                .set(cube,    { rotationX: -45, rotationY: -25 }) // set initial cube position
+
+
+            Draggable.create(dragger, {
+            
+                onDragStart: (e) => { 
+                    if (e.touches) {// on mobile, convert the touch x/y
+                        e.clientX = e.touches[0].clientX;
+                        e.clientY = e.touches[0].clientY;            
+                    }
+                    pos.x = Math.round(e.clientX);
+                    pos.y = Math.round(e.clientY);
+                },
+                
+                onDrag: (e) => {
+                    if (e.touches) {// on mobile, convert the touch x/y
+                        e.clientX = e.touches[0].clientX;
+                        e.clientY = e.touches[0].clientY;            
+                    }
+                    
+                    let ry = Math.abs(gsap.getProperty(cube, 'rotationY') % 360),
+                        rxDir = (ry > 90 && ry < 270) ? '+=' : '-='; // feels more intuitive to invert rotationX when cube is turned backwards
+                    
+                    gsap.to(cube, {
+                        rotationX: rxDir + (Math.round(e.clientY) - pos.y),
+                        rotationY: '+=' + ((Math.round(e.clientX)-pos.x) % 360)
+                    });
+
+                    pos.x = Math.round(e.clientX);
+                    pos.y = Math.round(e.clientY);
+                },
+                
+                onDragEnd: () => gsap.set(dragger, {x: 0, y: 0}) // reset drag layer
+            })
+        </script>
+    </body>
+</html>

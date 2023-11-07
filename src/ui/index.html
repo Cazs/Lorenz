@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<meta name="theme-color" content="#000000" />
+		<meta name="description" content="WebSockets" />
+
+		<title>Lorenz</title>
+  	</head>
+  	<body>
+		<noscript>You need to enable JavaScript to run this app.</noscript>
+
+		<canvas id="myCanvas" width="600" height="480" style="border: 1px solid #000000; background-color: rgba(0, 0, 0, 0.1);"></canvas> 
+
+		<!-- <script type="text/javascript" src="./lorenz.js" type="module"> -->
+		<script type="text/javascript" src="./lib/lorenz.js"></script>
+		<script type="text/javascript">
+			const lorenz = new Lorenz(window, document, "myCanvas");
+
+			console.log('lorenz: ', lorenz);
+
+			lorenz.init("ws://127.0.0.1:4242", window, document);
+		</script>
+	</body>
+</html>

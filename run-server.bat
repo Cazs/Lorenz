@@ -1,0 +1,1 @@
+.\bin\ws-game-server.exe 4242

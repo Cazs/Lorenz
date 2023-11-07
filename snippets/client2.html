@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <!-- <link rel="icon" href="%PUBLIC_URL%/favicon.ico" /> -->
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#000000" />
+    <meta
+      name="description"
+      content="WebSockets"
+    />
+    <!-- <link rel="apple-touch-icon" href="%PUBLIC_URL%/logo192.png" /> -->
+    <!--
+      manifest.json provides metadata used when your web app is installed on a
+      user's mobile device or desktop. See https://developers.google.com/web/fundamentals/web-app-manifest/
+    -->
+    <!-- <link rel="manifest" href="%PUBLIC_URL%/manifest.json" /> -->
+    <!--
+      Notice the use of %PUBLIC_URL% in the tags above.
+      It will be replaced with the URL of the `public` folder during the build.
+      Only files inside the `public` folder can be referenced from the HTML.
+
+      Unlike "/favicon.ico" or "favicon.ico", "%PUBLIC_URL%/favicon.ico" will
+      work correctly both with client-side routing and a non-root public URL.
+      Learn how to configure a non-root public URL by running `npm run build`.
+    -->
+    <title>WebSockets App</title>
+  </head>
+  <body>
+    <noscript>You need to enable JavaScript to run this app.</noscript>
+    <div id="root"></div>
+
+    <canvas id="myCanvas" width="600" height="480" style="border: 1px solid #000000; background-color: aquamarine;">
+    </canvas> 
+
+    <script type="text/javascript">
+      console.log("Init Script...");
+      var x = 95;
+      var y = 50;
+      var actorSize = 5;
+      var speed = 5;
+
+      var c = document.getElementById("myCanvas");
+      var ctx = c.getContext("2d");
+      
+
+      // Create WebSocket connection.
+      const socket = new WebSocket("ws://127.0.0.1:4242");
+
+      function renderRemoteClient(xPos, yPos) {
+        ctx.clearRect(0, 0, c.width, c.height);
+        ctx.beginPath();
+        ctx.arc(xPos, yPos, actorSize, 0, 2 * Math.PI);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+      }
+
+      // Connection opened
+      socket.addEventListener("open", (event) => {
+        socket.send(`GetPos`); // 123,321
+
+        setInterval(() => {
+            console.log('Sending GetPos request.');
+            socket.send(`GetPos`);
+        }, 5);
+      });
+      
+      // Listen for messages
+      socket.onmessage = function(event) {
+        var coords = Object.assign(event.data);
+        // console.log(`Client 2 >>> [message] Data received from server: ${JSON.parse(event.data)}`);
+        console.log('Client 2 >>> [message] Data received from server: ', coords);
+
+        const clientCoords = coords.split(';');
+        for(var clientPos in clientCoords) {
+          const client = clientCoords[clientPos];
+          // console.log(`client: ${client}`);
+          if(client.trim() !== '') {
+            var xPos = Number(client.split(',')[0]);
+            var yPos = Number(client.split(',')[1]);
+
+            console.log(`x: ${xPos}, y: ${yPos}`);
+            renderRemoteClient(xPos, yPos);
+          }
+        }
+      };
+
+      socket.onclose = function(event) {
+        if (event.wasClean) {
+          console.log(`[close] Connection closed cleanly, code=${event.code} reason=${event.reason}`);
+        } else {
+          // e.g. server process killed or network down
+          // event.code is usually 1006 in this case
+          console.log('[close] Connection died');
+        }
+      };
+
+      socket.onerror = function(error) {
+        console.log('ws error: ', error);
+        console.log(`[error]`);
+      };
+    </script>
+  </body>
+</html>

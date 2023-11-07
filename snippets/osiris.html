@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <!-- <link rel="icon" href="%PUBLIC_URL%/favicon.ico" /> -->
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#000000" />
+    <meta
+      name="description"
+      content="WebSockets"
+    />
+    <!-- <link rel="apple-touch-icon" href="%PUBLIC_URL%/logo192.png" /> -->
+    <!--
+      manifest.json provides metadata used when your web app is installed on a
+      user's mobile device or desktop. See https://developers.google.com/web/fundamentals/web-app-manifest/
+    -->
+    <!-- <link rel="manifest" href="%PUBLIC_URL%/manifest.json" /> -->
+    <!--
+      Notice the use of %PUBLIC_URL% in the tags above.
+      It will be replaced with the URL of the `public` folder during the build.
+      Only files inside the `public` folder can be referenced from the HTML.
+
+      Unlike "/favicon.ico" or "favicon.ico", "%PUBLIC_URL%/favicon.ico" will
+      work correctly both with client-side routing and a non-root public URL.
+      Learn how to configure a non-root public URL by running `npm run build`.
+    -->
+    <title>WebSockets App</title>
+  </head>
+  <body>
+    <noscript>You need to enable JavaScript to run this app.</noscript>
+    <div id="root"></div>
+
+    <!-- <canvas id="myCanvas" width="600" height="480" style="border: 1px solid #000000; background-color: aquamarine;"> -->
+    <!-- <h1 style="text-align: center;">This box represents Keesha's lovely soul 🙃 ... pathetic  ...  🙄 ... and empty AF! 🤣 </h1> -->
+    <canvas id="myCanvas" width="600" height="480" style="border: 1px solid #000000; background-color: rgba(0, 0, 0, 0.1);">
+    </canvas> 
+
+    <script type="text/javascript">
+        console.log("Init Script...");
+      
+        var c = document.getElementById('myCanvas');
+
+        c.width = window.innerWidth - 30;
+        c.height = window.innerHeight - 30;
+
+        var ctx = c.getContext('2d');
+
+        var camX = 0; // c.width / 2;
+        var camY = 0; // c.height / 2;
+        var camPanSpeed = 10.1;
+
+        var w = c.width;
+        var h = c.height;
+
+        // const isSecondaryClient = true;
+        var socKey = '';
+        var id = 0;
+        var x = 95;
+        var y = 50;
+        var bullets = [];
+
+        var clients = {}; // [];
+        var actorSize = 5;
+        var speed = 10;
+
+        const controls = {
+            xSpeed: 0,
+            ySpeed: 0,
+            w: {
+                lastActive: new Date().getTime(),
+                lastActiveDiff: 0,
+                active: false,
+            },
+            s: {
+                lastActive: new Date().getTime(),
+                lastActiveDiff: 0,
+                active: false,
+            },
+            a: {
+                lastActive: new Date().getTime(),
+                lastActiveDiff: 0,
+                active: false,
+            },
+            d: {
+                lastActive: new Date().getTime(),
+                lastActiveDiff: 0,
+                active: false,
+            },
+            up: {
+                lastActive: new Date().getTime(),
+                lastActiveDiff: 0,
+                active: false,
+            },
+            down: {
+                lastActive: new Date().getTime(),
+                lastActiveDiff: 0,
+                active: false,
+            },
+            left: {
+                lastActive: new Date().getTime(),
+                lastActiveDiff: 0,
+                active: false,
+            },
+            right: {
+                lastActive: new Date().getTime(),
+                lastActiveDiff: 0,
+                active: false,
+            },
+        };
+      
+        class WebsocketClient {
+        id = '';
+        x = 0;
+        y = 0;
+      }
+      
+        class WebsocketClientBullet {
+        id = 0;
+        x = 0;
+        y = 0;
+        hasImpacted = false;
+      }
+
+        class RGBA {
+            r = 0;
+            g = 0;
+            b = 0;
+            a = 0;
+
+            constructor(r, g, b, a) {
+                this.r = r;
+                this.g = g;
+                this.b = b;
+                this.a = a;
+            }
+        }
+
+        class CelestialBodyCoords {
+            x = 0;
+            y = 0;
+            z = 0;
+
+            constructor(x, y, z) {
+                this.x = x;
+                this.y = y;
+                this.z = z;
+            }
+        }
+
+        class CelestialBody {
+				celestialBodyStar;
+				celestialBodyId = '';
+				celestialBodyType = '';
+				celestialBodyName = '';
+				celestialBodyDescription = '';
+				celestialBodyRadius = 0;
+				celestialBodyWeight = 0;
+				celestialBodyGravityStrength = 0;
+				celestialBodyCoords = new CelestialBodyCoords();
+				celestialBodyColour = new RGBA();
+
+				constructor(
+					celestialBodyStar,
+					celestialBodyId,
+					celestialBodyType,
+					celestialBodyName,
+					celestialBodyDescription,
+					celestialBodyRadius,
+					celestialBodyWeight,
+					celestialBodyGravityStrength,
+					celestialBodyCoords,
+					celestialBodyColour
+				) {
+					this.celestialBodyStar = celestialBodyStar;
+					this.celestialBodyId = celestialBodyId;
+					this.celestialBodyType = celestialBodyType;
+					this.celestialBodyName = celestialBodyName;
+					this.celestialBodyDescription = celestialBodyDescription;
+					this.celestialBodyRadius = celestialBodyRadius;
+					this.celestialBodyWeight = celestialBodyWeight;
+					this.celestialBodyGravityStrength = celestialBodyGravityStrength;
+					this.celestialBodyCoords = celestialBodyCoords;
+					this.celestialBodyColour = celestialBodyColour;
+				}
+			}
+
+        // var keyRefreshRate = 20;
+        var run = true;
+        // var renderRate = 60;
+        var renderRate = 1000 / 60;
+        // var renderRate = 1000 / 1;
+        var i = 0;
+
+        // Create WebSocket connection.
+        // let socket = new WebSocket("ws://127.0.0.1:4242");
+
+        // var actor = {
+        //     x: yCoord,
+        //     y: yCoord,
+        //     z: 0,
+        //     w: 100,
+        //     h: 50,
+        //     l: 60,
+        // }
+
+        var xCoord = 400;
+        var yCoord = 200;
+        let actorWidth = 80;
+        let actorHeight = 80;
+        var offsetX = 20;
+        var offsetY = 20;
+        var rotateSpeed = 0.8;
+        // var offsetZ = 30;
+
+        function updateActorCoords() {
+            if (
+                Object.keys(controls).filter((k) => controls[k].active).length > 0
+            ) {
+                if(controls.w.active) {
+                    yCoord -= speed;
+                }
+                if(controls.s.active) {
+                    yCoord += speed;
+                }
+                if(controls.a.active) {
+                    xCoord -= speed;
+                }
+                if(controls.d.active) {
+                    xCoord += speed;
+                }
+
+                if (controls.up.active) {
+                    offsetY -= rotateSpeed;
+                }
+                if (controls.down.active) {
+                    offsetY += rotateSpeed;
+                }
+                if (controls.left.active) {
+                    offsetX -= rotateSpeed;
+                }
+                if (controls.right.active) {
+                    offsetX += rotateSpeed;
+                }
+
+                /*if (controls.up.active) {
+                    camY += camPanSpeed;
+                    controls.ySpeed -= camPanSpeed;
+                } else {
+                    camY = controls.ySpeed > 0 ? camY - camPanSpeed : camY;
+                    controls.ySpeed -= camPanSpeed;
+                }
+
+                if (controls.down.active) {
+                    camY -= camPanSpeed;
+                    controls.ySpeed += camPanSpeed;
+                } else {
+                    camY = controls.ySpeed > 0 ? camY - camPanSpeed : camY;
+                    controls.ySpeed -= camPanSpeed;
+                }
+
+                if (controls.left.active) {
+                    camX += camPanSpeed;
+                    controls.xSpeed -= camPanSpeed;
+                } else {
+                    camX = controls.xSpeed > 0 ? camX - camPanSpeed : camX;
+                    controls.xSpeed -= camPanSpeed;
+                }
+
+                if (controls.right.active) {
+                    camX -= camPanSpeed;
+                    controls.xSpeed += camPanSpeed;
+                } else {
+                    camX = controls.xSpeed > 0 ? camX - camPanSpeed : camX;
+                    controls.xSpeed -= camPanSpeed;
+                }*/
+            } // else no active keys
+
+            console.log(`x: ${xCoord}, y: ${yCoord}, x-offset: ${offsetX}, y-offset: ${offsetY}`);
+        }
+
+        // window.setTimeout(() => {
+        window.setInterval(() => {
+            ctx.clearRect(0, 0, c.width, c.height);
+
+            console.log('render!!!');
+
+            // rear square face stroke
+            ctx.beginPath();
+            // move to top1 left
+            ctx.moveTo(xCoord, yCoord);
+            // diagonal line to top2 right
+            ctx.lineTo(xCoord + actorWidth, yCoord);
+            // vertical line to bottom2 right
+            ctx.lineTo(xCoord + actorWidth, yCoord + actorHeight);
+            // diagonal line to bottom1 left
+            ctx.lineTo(xCoord, yCoord + actorHeight);
+            // vertical to top1 left
+            ctx.closePath();
+
+            // rear square face fill
+            ctx.fillStyle = "red"; // "rgba(50, 255, 30, .7)";
+            ctx.strokeStyle = "black";
+            ctx.fill();
+            ctx.lineWidth = 1.0;
+            ctx.lineCap = "round";
+            ctx.lineJoin = "round";
+            ctx.stroke();
+
+            // Offsets
+
+            // front square face stroke
+            ctx.beginPath();
+            // move to top1 left
+            ctx.moveTo(xCoord + offsetX, yCoord + offsetY);
+            // diagonal line to top2 right
+            ctx.lineTo(xCoord + offsetX + actorWidth, yCoord + offsetY);
+            // vertical line to bottom2 right
+            ctx.lineTo(xCoord + offsetX + actorWidth, yCoord + offsetY + actorHeight);
+            // diagonal line to bottom1 left
+            ctx.lineTo(xCoord + offsetX, yCoord + offsetY + actorHeight);
+            // vertical to top1 left
+            ctx.closePath();
+
+            // front square face fill
+            ctx.fillStyle = "blue"; // "rgba(50, 255, 30, .7)";
+            ctx.strokeStyle = "black";
+            ctx.fill();
+            ctx.lineWidth = 1.0;
+            ctx.lineCap = "round";
+            ctx.lineJoin = "round";
+            ctx.stroke();
+
+            // Trapeziums
+
+            // left trapezium face stroke
+            ctx.beginPath();
+            // move to top1 left
+            ctx.moveTo(xCoord, yCoord);
+            // diagonal line to top2 right
+            ctx.lineTo(xCoord + offsetX, yCoord + offsetY);
+            // vertical line to bottom2 right
+            ctx.lineTo(xCoord + offsetX, yCoord + offsetY + actorHeight);
+            // diagonal line to bottom1 left
+            ctx.lineTo(xCoord, yCoord + actorHeight);
+            // vertical to top1 left
+            ctx.closePath();
+
+            // left trapezium face fill
+            ctx.fillStyle = "rgba(50, 255, 30, .7)";
+            ctx.strokeStyle = "black";
+            ctx.fill();
+            ctx.lineWidth = 1.0;
+            ctx.lineCap = "round";
+            ctx.lineJoin = "round";
+            ctx.stroke();  
+
+            // right trapezium face stroke
+            ctx.beginPath();
+            // move to top1 left
+            ctx.moveTo(xCoord + actorWidth, yCoord);
+            // diagonal line to top2 right
+            ctx.lineTo(xCoord + actorWidth + offsetX, yCoord + offsetY);
+            // vertical line to bottom2 right
+            ctx.lineTo(xCoord + actorWidth + offsetX, yCoord + offsetY + actorHeight);
+            // diagonal line to bottom1 left
+            ctx.lineTo(xCoord + actorWidth, yCoord + actorHeight);
+            // vertical to top1 left
+            ctx.closePath();
+
+            // right trapezium face fill
+            ctx.fillStyle = "rgba(180, 60, 30, .7)";
+            ctx.strokeStyle = "black";
+            ctx.fill();
+            ctx.lineWidth = 1.0;
+            ctx.lineCap = "round";
+            ctx.lineJoin = "round";
+            ctx.stroke();
+        }, renderRate);
+
+        function updateControls(key, active) {
+            if (key) {
+                const tempCurrentTime = new Date().getTime();
+                const diff = tempCurrentTime - controls[key].lastActive;
+                // console.log(
+                //     `${key} key last active: ${controls[key].lastActive}, time diff: ${diff}`
+                // );
+
+                controls[key].lastActive = tempCurrentTime;
+                controls[key].lastActiveDiff = diff;
+                controls[key].active = active; // !controls[key].active;
+
+                // socket.send(`MoveTo: ${x},${y}`);
+                // console.log(controls[key], '\n\n');
+                updateActorCoords();
+            } else {
+                console.error(`Error: Invalid key: ${key}`);
+            }
+        }
+
+        document.addEventListener(
+            "keydown",
+            (event) => {
+                const keyName = event.key;
+
+                switch(keyName) {
+                case "w":
+                case "W":
+                    updateControls("w", true);
+                    break;
+                case "s":
+                case "S":
+                    updateControls("s", true);
+                    break;
+                case "a":
+                case "A":
+                    updateControls("a", true);
+                    break;
+                case "d":
+                case "D":
+                    updateControls("d", true);
+                    break;
+                case "ArrowUp":
+                    updateControls("up", true);
+                    break;
+                case "ArrowDown":
+                    updateControls("down", true);
+                    break;
+                case "ArrowLeft":
+                    updateControls("left", true);
+                    break;
+                case "ArrowRight":
+                    updateControls("right", true);
+                    break;
+                /*case "Enter":
+                    // Do something for "enter" or "return" key press.
+                    break;
+                case "Escape":
+                    // Do something for "esc" key press.
+                    break;*/
+                // default:
+                //   console.warn(`Warning: Unknown key: ${keyName}`);
+                //   break;
+                };
+            },
+            false,
+        );
+
+        document.addEventListener(
+            "keyup",
+            (event) => {
+                const keyName = event.key;
+
+                switch(keyName) {
+                case "w":
+                case "W":
+                    updateControls("w", false);
+                    break;
+                case "s":
+                case "S":
+                    updateControls("s", false);
+                    break;
+                case "a":
+                case "A":
+                    updateControls("a", false);
+                    break;
+                case "d":
+                case "D":
+                    updateControls("d", false);
+                    break;
+                case "ArrowUp":
+                    updateControls("up", false);
+                    break;
+                case "ArrowDown":
+                    updateControls("down", false);
+                    break;
+                case "ArrowLeft":
+                    updateControls("left", false);
+                    break;
+                case "ArrowRight":
+                    updateControls("right", false);
+                    break;
+                case "q":
+                case "Q":
+                    const bullet = {
+                    id: 0,
+                    x: x + 10,
+                    y: y,
+                    hasImpacted: false,
+                    };
+
+                    bullets = [bullet];
+
+                    // socket.send(`MoveBulletTo: ${bullet.id},${bullet.x},${bullet.y}`);
+                    break;
+                // default:
+                //   console.warn(`Warning: Unknown key: ${keyName}`);
+                //   break;
+                };
+            },
+            false,
+        );
+    </script>
+  </body>
+</html>

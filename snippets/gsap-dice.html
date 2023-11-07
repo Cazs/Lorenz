@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <script src="https://unpkg.com/gsap@3/dist/gsap.min.js" type="text/javascript"></script>
+        <title>Rotating Cube</title>
+        <style>
+            html, body {
+                width:100%;
+                height: 100%;
+                overflow:hidden;
+                background:#eee;
+            }
+
+            div {
+                position: absolute;
+            }
+
+            .container {
+                width: 300px;
+                height: 300px;
+                perspective: 1000px; /* psst...something fun happens when this is a really small number */
+                left:50%;
+                top:50%;
+                transform:translate(-50%,-50%);
+            }
+
+            #cube, .face {
+                height: 100%;
+                width: 100%;
+                transform-style: preserve-3d;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <div id="cube">
+                <div class="face"></div>
+                <div class="face"></div>
+                <div class="face"></div>
+                <div class="face"></div>
+                <div class="face"></div>
+                <div class="face"></div>
+            </div>
+        </div>
+        
+        <script>
+            var cube = document.querySelector('#cube');
+
+            let rots = [ 
+                { ry: 0,   rx: 0  }, // 1
+                { ry: 90,  rx: 0  }, // 2
+                { ry: 180, rx: 0  }, // 3
+                { ry: 270, rx: 0  }, // 4
+                { ry: 0,   rx: 90 }, // 5
+                { ry: 0,   rx:-90 }  // 6
+            ];
+
+            gsap.set(".face", { // apply transform rotations to each face of the cube
+                rotateY: (i) => rots[i].ry,
+                rotateX: (i) => rots[i].rx,
+                transformOrigin: "50% 50% -150px",
+                z: 150,
+                background:(i)=>'url(https://assets.codepen.io/721952/dieSprite_1.svg) 0px -'+String(i*300)+'px'// svg spritesheet for the different faces
+            });
+
+            gsap.timeline({ repeat: -1, defaults: { duration: 1, ease: "expo.inOut" } })
+                .to(cube, { rotateX: 0,  rotateY: -90  })
+                .to(cube, { rotateX: 0,  rotateY: -180 })
+                .to(cube, { rotateX: 0,  rotateY: -270 })
+                .to(cube, { rotateX:-90, rotateY: -360 })
+                .to(cube, { rotateX: 90, rotateY: -360 })
+                .to(cube, { rotateX: 0,  rotateY: -360 }) // short rotation back to 1
+        </script>
+    </body>
+</html>

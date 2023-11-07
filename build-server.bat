@@ -1,0 +1,1 @@
+g++ -I.. -o .\bin\ws-game-server .\src\server\lib\sha1.cpp .\src\server\main.cpp -lstdc++ -lwsock32 -lWs2_32

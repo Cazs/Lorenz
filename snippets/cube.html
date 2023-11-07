@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rotating Cube</title>
+    <style>
+        body {
+            margin: 0;
+        }
+        canvas {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+<script>
+    function getRandomArbitrary(min, max) {
+        return Math.random() * (max - min) + min;
+    }
+
+    // constants
+    const COLOR_BG = "black";
+    const COLOR_CUBE = "white";
+    const SPEED_X = 0.1; // 0.05; // rps
+    const SPEED_Y = 0.1; // 0.15; // rps
+    const SPEED_Z = 0.1; // 0.10; // rps
+    const POINT3D = function(x, y, z) { this.x = x; this.y = y; this.z = z; };
+
+    // set up the canvas and context
+    var canvas = document.createElement("canvas");
+    document.body.appendChild(canvas);
+    var ctx = canvas.getContext("2d");
+
+    // dimensions
+    var h = document.documentElement.clientHeight;
+    var w = document.documentElement.clientWidth;
+    canvas.height = h;
+    canvas.width = w;
+
+    // colours and lines
+    // ctx.fillStyle = `rgba(${getRandomArbitrary(0, 255)}, ${getRandomArbitrary(0, 255)}, ${getRandomArbitrary(0, 255)}, ${getRandomArbitrary(0, 1)})`; // COLOR_BG;
+    ctx.fillStyle = COLOR_BG;
+    ctx.strokeStyle = COLOR_CUBE;
+    ctx.lineWidth = w / 100;
+    ctx.lineCap = "round";
+
+    // cube parameters
+    var cx = w / 2;
+    var cy = h / 2;
+    var cz = 50;
+    var size = h / 4;
+    var vertices = [
+        new POINT3D(cx - size, cy - size, cz - size),
+        new POINT3D(cx + size, cy - size, cz - size),
+        new POINT3D(cx + size, cy + size, cz - size),
+        new POINT3D(cx - size, cy + size, cz - size),
+        new POINT3D(cx - size, cy - size, cz + size),
+        new POINT3D(cx + size, cy - size, cz + size),
+        new POINT3D(cx + size, cy + size, cz + size),
+        new POINT3D(cx - size, cy + size, cz + size)
+    ];
+    var edges2 = [
+        [0, 1], [1, 2], [2, 3], [3, 0], // back face
+        // [0, 1], [5, 2], [6, 3], [7, 0], // top face
+        // [0, 1], [1, 6], [2, 7], [3, 0], // top face
+        // [0, 1], [1, 6], [2, 7], [3, 0], // top face
+        [4, 5], [5, 6], [6, 7], [7, 4], // front face
+        // [0, 4], [1, 5], [2, 6], [3, 7] // connecting sides
+        // [0, 1], [4, 5], [1, 2], [4, 0] // connecting sides
+        // [0, 1], [4, 5], [2, 3], [3, 0],
+        // [0, 1], [5, 6], [5, 6], [3, 0], // front face
+        // [0, 4], [1, 5], [2, 6], [3, 5] // connecting sides
+        // [5, 6], [6, 7], [7, 8], [8, 5] // connecting sides
+    ];
+
+    var edges = [
+        [0, 1], [1, 2], [2, 3], [3, 0], // back face
+        [4, 5], [5, 6], [6, 7], [7, 4], // front face
+        // [0, 4], [1, 5], [2, 6], [3, 7] // connecting sides
+        [0, 1], [1, 2], [6, 7], [7, 4] // connecting sides
+    ];
+    
+    // set up the animation loop
+    var timeDelta, timeLast = 0;
+    requestAnimationFrame(loop);
+
+    function shadeColor(color, percent) {
+        color = color.substr(1);
+        var num = parseInt(color, 16),
+            amt = Math.round(2.55 * percent),
+            R = (num >> 16) + amt,
+            G = (num >> 8 & 0x00FF) + amt,
+            B = (num & 0x0000FF) + amt;
+        return '#' + (0x1000000 + (R < 255 ? R < 1 ? 0 : R : 255) * 0x10000 + (G < 255 ? G < 1 ? 0 : G : 255) * 0x100 + (B < 255 ? B < 1 ? 0 : B : 255)).toString(16).slice(1);
+    }
+
+
+    function loop(timeNow) {
+
+        // calculate the time difference
+        timeDelta = timeNow - timeLast;
+        timeLast = timeNow;
+
+        // background
+        ctx.fillStyle = COLOR_BG;
+        ctx.fillRect(0, 0, w, h);
+
+        // rotate the cube along the z axis
+        let angle = timeDelta * 0.0001 * SPEED_Z * Math.PI * 2;
+        for (let v of vertices) {
+            let dx = v.x - cx;
+            let dy = v.y - cy;
+            let x = dx * Math.cos(angle) - dy * Math.sin(angle);
+            let y = dx * Math.sin(angle) + dy * Math.cos(angle);
+            v.x = x + cx;
+            v.y = y + cy;
+        }
+
+        // rotate the cube along the x axis
+        angle = timeDelta * 0.0001 * SPEED_X * Math.PI * 2;
+        for (let v of vertices) {
+            let dy = v.y - cy;
+            let dz = v.z - cz;
+            let y = dy * Math.cos(angle) - dz * Math.sin(angle);
+            let z = dy * Math.sin(angle) + dz * Math.cos(angle);
+            v.y = y + cy;
+            v.z = z + cz;
+        }
+
+        // rotate the cube along the y axis
+        angle = timeDelta * 0.001 * SPEED_Y * Math.PI * 2;
+        for (let v of vertices) {
+            let dx = v.x - cx;
+            let dz = v.z - cz;
+            let x = dz * Math.sin(angle) + dx * Math.cos(angle);
+            let z = dz * Math.cos(angle) - dx * Math.sin(angle);
+            v.x = x + cx;
+            v.z = z + cz;
+        }
+
+        var faces = [];
+        var i = 0;
+        var dist = 0;
+        // for (let edge2 of edges2) {
+        for (let edge2 of edges) {
+            ctx.beginPath();
+
+            ctx.moveTo(vertices[edge2[0]].x, vertices[edge2[0]].y);
+            ctx.lineTo(vertices[edge2[1]].x, vertices[edge2[1]].y);
+            ctx.strokeStyle = "red";
+
+            ctx.closePath();
+
+            ctx.lineWidth = 3.0;
+            ctx.lineCap = "round";
+            ctx.lineJoin = "round";
+            ctx.stroke();
+        }
+
+        function renderTopFace() {
+            // Top Face
+            ctx.beginPath();
+            ctx.moveTo(vertices[4].x, vertices[4].y);
+            ctx.lineTo(vertices[5].x, vertices[5].y);
+            ctx.lineTo(vertices[1].x, vertices[1].y);
+            ctx.lineTo(vertices[0].x, vertices[0].y);
+            ctx.closePath();
+            ctx.fillStyle = shadeColor('#D9880B', -20); // gold
+            ctx.strokeStyle = '#D9880B'; // shadeColor(color, 60);
+            ctx.lineWidth = 5.0;
+            ctx.stroke();
+            ctx.fill();
+        }
+
+        function renderBottomFace() {
+            // Bottom Face
+            ctx.beginPath();
+            ctx.moveTo(vertices[6].x, vertices[6].y);
+            ctx.lineTo(vertices[7].x, vertices[7].y);
+            ctx.lineTo(vertices[3].x, vertices[3].y);
+            ctx.lineTo(vertices[2].x, vertices[2].y);
+            ctx.closePath();
+            ctx.fillStyle = shadeColor('#F0B89C', 20); // light-brown
+            ctx.strokeStyle = '#F0B89C'; // shadeColor(color, 60);
+            ctx.lineWidth = 5.0;
+            ctx.stroke();
+            ctx.fill();
+        }
+        
+        // 3,7,4,0
+        function renderLeftFace() {
+            // Left Face
+            ctx.beginPath();
+            ctx.moveTo(vertices[3].x, vertices[3].y);
+            ctx.lineTo(vertices[7].x, vertices[7].y);
+            ctx.lineTo(vertices[4].x, vertices[4].y);
+            ctx.lineTo(vertices[0].x, vertices[0].y);
+            ctx.closePath();
+            ctx.fillStyle = '#C217F0'; // shadeColor('#C217F0', 0); // purple
+            ctx.strokeStyle = '#C217F0'; // 'red'; // shadeColor(color, 60);
+            ctx.lineWidth = 1.0;
+            ctx.stroke();
+            ctx.fill();
+            ctx.fillStyle = 'white';
+            dist = Number(Math.sqrt(((vertices[0].x - vertices[4].x )*2) + ((vertices[0].y - vertices[4].y )*2))) || 0;
+            ctx.fillText(`Face: 0, Distance: ${dist}`, (vertices[3].x + vertices[2].x)/2, vertices[2].y/2 + 100);
+        }
+
+        // 3,2,1,0
+        function renderFrontFace() {
+            // Front Face
+            ctx.beginPath();
+            ctx.moveTo(vertices[0].x, vertices[0].y);
+            ctx.lineTo(vertices[1].x, vertices[1].y); // x - wx, y - wx * ANGLE);
+            ctx.lineTo(vertices[2].x, vertices[2].y); // x - wx, y - h - wx * ANGLE);
+            ctx.lineTo(vertices[3].x, vertices[3].y);// x, y - h * 1);
+            ctx.closePath();
+            // ctx.fillStyle = shadeColor('#0B17D9', -10); // blue
+            ctx.fillStyle = '#0B17D9'; // shadeColor('#0B17D9', 0); // blue
+            ctx.strokeStyle = '#0B17D9'; // color;
+            ctx.lineWidth = 1.0;
+            ctx.stroke();
+            ctx.fill();
+            ctx.fillStyle = 'white';
+            
+            // dist = Number(Math.sqrt(((vertices[3].x - vertices[2].x )*2) + ((vertices[3].y - vertices[2].y )*2))) || 0;
+            // dist = vertices[3].z - vertices[2].z;
+            // ctx.fillText(`Face: 6, Distance: ${dist}`, (vertices[3].x + vertices[2].x)/2, vertices[2].y/2 + 100);
+        }
+  
+        // 1,5,6,2
+        function renderRightFace() {
+            // Top Face
+            ctx.beginPath();
+            ctx.moveTo(vertices[1].x, vertices[1].y);
+            ctx.lineTo(vertices[5].x, vertices[5].y);
+            ctx.lineTo(vertices[6].x, vertices[6].y);
+            ctx.lineTo(vertices[2].x, vertices[2].y);
+            ctx.closePath();
+            ctx.fillStyle = '#D9880B'; // shadeColor('#F0B89C', 20); // light-brown
+            ctx.strokeStyle = '#D9880B'; // '#FFFFFF'; // shadeColor(color, 60);
+            ctx.lineWidth = 5.0;
+            ctx.stroke();
+            ctx.fill();
+        }
+
+        // 4,5,6,7
+        function renderBackFace() {
+            // Back Face
+            ctx.beginPath();
+            ctx.moveTo(vertices[4].x, vertices[4].y); // x, y);
+            ctx.lineTo(vertices[5].x, vertices[5].y); // x + wy, y - wy * ANGLE);
+            ctx.lineTo(vertices[6].x, vertices[6].y); // x + wy, y - h - wy * ANGLE);
+            ctx.lineTo(vertices[7].x, vertices[7].y); // x, y - h * 1);
+            ctx.closePath();
+            ctx.fillStyle = '#49FAB0'; // shadeColor('#49FAB0', 0); // turqoise
+            ctx.strokeStyle = '#49FAB0'; // 'red'; // shadeColor('#49FAB0', 50);
+            ctx.lineWidth = 1.0;
+            ctx.stroke();
+            ctx.fill();
+            ctx.fillStyle = 'white';
+
+            // dist = Number(Math.sqrt(((vertices[4].x - vertices[5].x )*2) + ((vertices[4].y - vertices[5].y )*2))) || 0;
+            // dist = vertices[4].z - vertices[5].z;
+            // ctx.fillText(`Face: 4, Distance: ${dist}`, (vertices[4].x + vertices[5].x)/2, vertices[5].y/2 + 100);
+        }
+
+        var facez = [];
+        var edgeCount = 0;
+        var edge;
+        var color = '#824DFF';
+        
+        var wx = 50;
+        var wy = 50;
+        var height = 50; 
+
+        // draw each edge
+        for (let i = 0; i < edges.length; i++) {
+            // renderRightFace(); // gold - right
+            // renderLeftFace(); // magenta - left
+
+            // right and left
+            // if(vertices[3].z >= vertices[1].z) {
+            //     renderRightFace(); // gold - right
+            //     renderLeftFace(); // magenta - left
+            // } else {
+            //     renderLeftFace(); // magenta - left
+            //     renderRightFace(); // gold - right
+            // }
+
+            // renderLeftFace(); // magenta - left
+
+            // front, top and back
+            if(vertices[4].z >= vertices[0].z) {
+                /*if(vertices[3].z >= vertices[1].z) {
+                    renderRightFace(); // gold - right
+                    renderLeftFace(); // magenta - left
+                } else {
+                    renderLeftFace(); // magenta - left
+                    renderRightFace(); // gold - right
+                }*/
+
+                renderBackFace(); // turquoise - back
+                renderLeftFace(); // magenta - left
+                renderTopFace(); // brown - top
+                renderBottomFace(); // light-brown - bottom
+                // renderRightFace(); // gold - right
+                renderFrontFace(); // blue - front
+            } else {
+                /*if(vertices[3].z < vertices[1].z) {
+                    renderRightFace(); // gold - right
+                    renderLeftFace(); // magenta - left
+                } else {
+                    renderLeftFace(); // magenta - left
+                    renderRightFace(); // gold - right
+                }*/
+
+                // renderLeftFace(); // magenta - left
+                renderFrontFace(); // blue - front
+                renderBottomFace(); // light-brown - bottom
+                renderLeftFace(); // magenta - left
+                renderTopFace(); // brown - top
+                // renderRightFace(); // magenta - left
+                renderBackFace(); // turquoise - back
+            }
+
+            // right and left
+            // if(vertices[3].z < vertices[1].z) {
+            //     renderRightFace(); // gold - right
+            //     renderLeftFace(); // magenta - left
+            // } else {
+            //     renderLeftFace(); // magenta - left
+            //     renderRightFace(); // gold - right
+            // }
+        }
+
+        // call the next frame
+        requestAnimationFrame(loop);
+    }
+
+    
+</script>
+</body>
+</html>

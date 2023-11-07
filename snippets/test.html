@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<!-- <link rel="icon" href="%PUBLIC_URL%/favicon.ico" /> -->
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<meta name="theme-color" content="#000000" />
+		<meta
+		name="description"
+		content="WebSockets"
+		/>
+		<!-- <link rel="apple-touch-icon" href="%PUBLIC_URL%/logo192.png" /> -->
+		<!--
+		manifest.json provides metadata used when your web app is installed on a
+		user's mobile device or desktop. See https://developers.google.com/web/fundamentals/web-app-manifest/
+		-->
+		<!-- <link rel="manifest" href="%PUBLIC_URL%/manifest.json" /> -->
+		<!--
+		Notice the use of %PUBLIC_URL% in the tags above.
+		It will be replaced with the URL of the `public` folder during the build.
+		Only files inside the `public` folder can be referenced from the HTML.
+
+		Unlike "/favicon.ico" or "favicon.ico", "%PUBLIC_URL%/favicon.ico" will
+		work correctly both with client-side routing and a non-root public URL.
+		Learn how to configure a non-root public URL by running `npm run build`.
+		-->
+		<title>WebSockets App</title>
+  	</head>
+  	<body>
+		<noscript>You need to enable JavaScript to run this app.</noscript>
+		<div id="root"></div>
+
+		<!-- <canvas id="myCanvas" width="600" height="480" style="border: 1px solid #000000; background-color: aquamarine;"> -->
+		<canvas id="myCanvas" width="600" height="480" style="border: 1px solid #000000; background-color: rgba(0, 0, 0, 0.1);">
+		</canvas> 
+
+		<script type="text/javascript">
+			console.log("Init Script...");
+      
+			const MAX_WIDTH = 680;
+			const MAX_HEIGHT = 480;
+
+      		var c = document.getElementById('myCanvas');
+
+			c.width = window.innerWidth - 30;
+			c.height = window.innerHeight - 30;
+
+			var ctx = c.getContext('2d');
+
+			var camX = 0; // c.width / 2;
+			var camY = 0; // c.height / 2;
+			var camPanSpeed = 10.1;
+
+			var w = c.width;
+			var h = c.height;
+
+			let socket;
+			// const isSecondaryClient = true;
+			var socKey = '';
+			var id = 0;
+			var x = 30; // 95;
+			var y = 30; // 50;
+			var bullets = [];
+
+			var clients = {}; // [];
+			var client = {};
+			var actorSize = 5;
+			var speed = 4;
+			var keyRefreshRate = 20; // 2500; // 2000; // 20;
+			var renderRate = 10; // 5000 / 1; // 1000 / 60;
+			var i = 0;
+			var run = true;
+
+			const controls = {
+						xSpeed: 0,
+						ySpeed: 0,
+						w: {
+							lastActive: new Date().getTime(),
+							lastActiveDiff: 0,
+							active: false,
+						},
+						s: {
+							lastActive: new Date().getTime(),
+							lastActiveDiff: 0,
+							active: false,
+						},
+						a: {
+							lastActive: new Date().getTime(),
+							lastActiveDiff: 0,
+							active: false,
+						},
+						d: {
+							lastActive: new Date().getTime(),
+							lastActiveDiff: 0,
+							active: false,
+						},
+						up: {
+							lastActive: new Date().getTime(),
+							lastActiveDiff: 0,
+							active: false,
+						},
+						down: {
+							lastActive: new Date().getTime(),
+							lastActiveDiff: 0,
+							active: false,
+						},
+						left: {
+							lastActive: new Date().getTime(),
+							lastActiveDiff: 0,
+							active: false,
+						},
+						right: {
+							lastActive: new Date().getTime(),
+							lastActiveDiff: 0,
+							active: false,
+						},
+					};
+			
+			class WebsocketClient {
+				id = '';
+				x = 0;
+				y = 0;
+			}
+			
+			class WebsocketClientBullet {
+				id = 0;
+				x = 0;
+				y = 0;
+				hasImpacted = false;
+			}
+
+	
+			function getRandomArbitrary(min, max) {
+				return Math.random() * (max - min) + min;
+			}
+
+			var renderWorldBackground = function () {
+				for(var i = 0; i < 10; i++) {
+					ctx.fillStyle = "white";  // "#343434";
+					ctx.fillText('*', getRandomArbitrary(0, 1280), getRandomArbitrary(0, 800));
+					ctx.stroke();
+					// ctx.fill();
+				}
+			}
+
+			function renderLocalClient() {
+				if(run) {
+					ctx.beginPath();
+					ctx.arc(x, y, actorSize, 0, 2 * Math.PI);
+					ctx.closePath();
+
+					ctx.fillStyle = "blue";
+					ctx.strokeStyle = "white";
+
+					ctx.fill();
+					ctx.fillText(`P0`, x - 6, y - 10);
+					ctx.stroke();
+				}
+				window.requestAnimationFrame(renderLocalClient);
+			}
+
+			// function renderRemoteClient(client) {
+			function renderRemoteClient() {
+				/*if(run) {
+					ctx.beginPath();
+					ctx.arc(client.x, client.y, actorSize, 0, 2 * Math.PI);
+					ctx.closePath();
+					ctx.fillStyle = "red";
+					ctx.fill();
+					ctx.fillText(`P${client.id}`, client.x - 6, client.y - 10);
+					ctx.stroke();
+				}*/
+
+				// paint bg
+				/*ctx.reset();
+				ctx.fillStyle = 'black';
+				ctx.fill();
+				ctx.fillRect(0, 0, w, h);
+
+				// set origin to center
+				ctx.translate(camX, camY);*/
+
+				// renderWorldBackground();
+
+				ctx.beginPath();
+				ctx.arc(client.x, client.y, actorSize, 0, 2 * Math.PI);
+				ctx.closePath();
+
+				ctx.fillStyle = "red";
+				ctx.strokeStyle = "white";
+
+				ctx.fill();
+				ctx.fillText(`P`, client.x - 6, client.y - 10);
+				ctx.stroke();
+
+				// window.requestAnimationFrame(renderRemoteClient);
+			}
+
+			var redraw = function () {
+				// paint bg
+				ctx.reset();
+				ctx.fillStyle = 'black';
+				ctx.fill();
+				ctx.fillRect(0, 0, w, h);
+
+				// set origin to center
+				ctx.translate(camX, camY);
+
+				// renderWorldBackground();
+
+				// i+=3;
+
+				// renderRemotePlayers();
+				if(client && client.id) {
+					// renderRemoteClient();
+					ctx.beginPath();
+					ctx.arc(client.x, client.y, actorSize, 0, 2 * Math.PI);
+					ctx.closePath();
+
+					ctx.fillStyle = "red";
+					ctx.strokeStyle = "white";
+
+					ctx.fill();
+					ctx.fillText(`Px`, client.x - 6, client.y - 10);
+					ctx.stroke();
+				}
+				renderLocalPlayer();
+				
+				// ctx.stroke();
+
+				window.requestAnimationFrame(redraw);
+			};
+
+			function initSocketHandlers() {
+				// Create WebSocket connection.
+				console.log('Sending server connection request...');
+				socket = new WebSocket("ws://127.0.0.1:4242");
+				
+				socket.addEventListener("open", (event) => {
+					console.log('Server connection established...');
+				});
+
+				socket.onmessage = function(event) {
+                    console.log(`[Client Message] Raw data received from server: ${event.data}`);
+
+                    var serverResponseData = new String(event.data).valueOf();
+                    console.log('[Client Message] Data received from server: ', serverResponseData);
+
+                    if(serverResponseData.startsWith('ACK_CLIENT_MOVETO:')) {
+                        const remoteClientData = serverResponseData.split('ACK_CLIENT_MOVETO:')[1];
+                        console.log('[Client Message] Received ACK_CLIENT_MOVETO from server: ', remoteClientData);
+                        
+                        const remoteClient = remoteClientData.split(',');
+                        var id = remoteClient[0];
+                        var x = remoteClient[1];
+                        var y = remoteClient[2];
+                        
+                        console.log('Client ID: ', id);
+                        console.log('Client X: ', x);
+                        console.log('Client Y: ', y);
+
+                        client.id = id;
+                        client.x = x;
+                        client.y = y;
+
+                        // window.requestAnimationFrame(redraw);
+                    }
+				};
+
+				socket.onclose = function(event) {
+					if (event.wasClean) {
+						console.log(`[onclose] Connection closed cleanly, code=${event.code} reason=${event.reason}`);
+					} else {
+						// e.g. server process killed or network down
+						console.log('[onclose] Connection died, event data: ', event);
+					}
+					run = false;
+				};
+
+				socket.onerror = function(error) {
+					console.log('[onerror] ws error: ', error);
+					run = false;
+				};
+			}
+
+			function init() {
+				initSocketHandlers();
+
+				// render world
+				// window.setTimeout(() => {
+				// 	window.requestAnimationFrame(redraw);
+				// }, renderRate);
+			}
+
+			init();
+		</script>
+	</body>
+</html>

@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+		<meta name="viewport" content=
+			"width=device-width, initial-scale=1.0" />
+
+		<title>3D Cube</title>
+
+		<style>
+			/* body {
+				margin: 0;
+			}
+
+			canvas {
+				display: block;
+			} */
+
+			*{
+				margin:0;
+				padding:0;
+				background:white;
+			}
+
+			body {
+				overflow:hidden;
+			}
+
+			form {
+				position:absolute;
+				bottom:0;
+				left:0;
+				right:0;
+				background:#efefef;
+				padding:1em;
+				text-align:center;
+			}
+		</style>
+	</head>
+
+	<body>
+		<!-- <canvas> </canvas> -->
+		<script>
+			// Set up our canvas
+			var canvas = document.createElement('canvas');
+			canvas.width = window.innerWidth;
+			canvas.height = window.innerHeight;
+			document.body.appendChild(canvas);
+			var ctx = canvas.getContext('2d');
+
+			// Pick out the form elements for easy access later
+			var x1 = 100; // document.querySelector('#x1');
+			var x2 = 100; // document.querySelector('#x2');
+			var y = 100; // document.querySelector('#y');
+			var color = '#824DFF'; // document.querySelector('#color');
+            var canvasHeight = window.innerHeight;
+            var canvasWidth = window.innerWidth;
+
+            const COLOR_BG = "black";
+            const COLOR_CUBE = "white";
+            const SPEED_X = 0.1; // 0.05; // rps
+            const SPEED_Y = 0.1; // 0.15; // rps
+            const SPEED_Z = 0.1; // 0.10; // rps
+            // const POINT3D = function(x, y, z) { this.x = x; this.y = y; this.z = z; };
+            // set up the animation loop
+            var timeDelta, timeLast = 0, angle = 0, timeNow = Date.now();
+
+			// Animation function
+			function draw() {
+                // clear the canvas
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+                timeNow = Date.now();
+                
+                // Wobble the cube using a sine wave
+                var wobble = Math.sin(timeNow / 250) * window.innerHeight / 50;
+                
+                // draw the cube
+                drawCube(
+                    window.innerWidth / 2,
+                    window.innerHeight / 2 + wobble + y / 2,
+                    // window.innerHeight/2 + wobble + y.value/2,
+                    x1, // Number(x1.value),
+                    x2, // Number(x2.value),
+                    y, // Number(y.value),
+                    color
+                );
+                
+                requestAnimationFrame(draw);
+			}
+			draw();
+
+			// Colour adjustment function
+			// Nicked from http://stackoverflow.com/questions/5560248
+			function shadeColor(color, percent) {
+				color = color.substr(1);
+				var num = parseInt(color, 16),
+					amt = Math.round(2.55 * percent),
+					R = (num >> 16) + amt,
+					G = (num >> 8 & 0x00FF) + amt,
+					B = (num & 0x0000FF) + amt;
+				return '#' + (0x1000000 + (R < 255 ? R < 1 ? 0 : R : 255) * 0x10000 + (G < 255 ? G < 1 ? 0 : G : 255) * 0x100 + (B < 255 ? B < 1 ? 0 : B : 255)).toString(16).slice(1);
+			}
+
+            var cx = canvasWidth / 2;
+            var cy = canvasHeight / 2;
+
+			// Draw a cube to the specified specs
+			function drawCube(x, y, wx, wy, h, color) {
+                console.log(`raw coords: [x: ${x}, y: ${y}]`);
+                // calculate the time difference
+                // timeNow = Date.now();
+                timeDelta = timeNow - timeLast;
+                timeLast = timeNow;
+                angle = timeDelta * 0.1 * SPEED_Y * Math.PI * 2;
+
+                // rotate along z-axis
+                let dx = x - cx;
+                let dy = y - cy;
+                let xx = dx * Math.cos(angle) - dy * Math.sin(angle);
+                let yy = dx * Math.sin(angle) + dy * Math.cos(angle);
+                x = xx + cx;
+                y = yy + cy;
+
+                console.log(`calculated coords: [x: ${x}, y: ${y}]`);
+
+				ctx.beginPath();
+				ctx.moveTo(x, y);
+				ctx.lineTo(x - wx, y - wx * 0.5);
+				ctx.lineTo(x - wx, y - h - wx * 0.5);
+				ctx.lineTo(x, y - h * 1);
+				ctx.closePath();
+				ctx.fillStyle = shadeColor(color, -10);
+				ctx.strokeStyle = color;
+				ctx.stroke();
+				ctx.fill();
+
+				ctx.beginPath();
+				ctx.moveTo(x, y);
+				ctx.lineTo(x + wy, y - wy * 0.5);
+				ctx.lineTo(x + wy, y - h - wy * 0.5);
+				ctx.lineTo(x, y - h * 1);
+				ctx.closePath();
+				ctx.fillStyle = shadeColor('3c3c3c', 10);
+				ctx.strokeStyle = shadeColor('3c3c3c', 50);
+				ctx.stroke();
+				ctx.fill();
+
+				ctx.beginPath();
+				ctx.moveTo(x, y - h);
+				ctx.lineTo(x - wx, y - h - wx * 0.5);
+				ctx.lineTo(x - wx + wy, y - h - (wx * 0.5 + wy * 0.5));
+				ctx.lineTo(x + wy, y - h - wy * 0.5);
+				ctx.closePath();
+				ctx.fillStyle = shadeColor(color, 20);
+				ctx.strokeStyle = shadeColor(color, 60);
+				ctx.stroke();
+				ctx.fill();
+			}
+		</script>
+	</body>
+</html>
