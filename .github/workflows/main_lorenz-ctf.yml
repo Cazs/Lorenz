@@ -17,14 +17,16 @@ jobs:
       runs-on: windows-latest # ubuntu-latest
       steps:
         - uses: actions/checkout@v4
-        # - name: Set up MinGW
-        #   run: choco install -y mingw --version 12.2.0.03042023 --allow-downgrade && choco uninstall -y mingw && choco install -y mingw
-      
-        # - name: Upload artifact for deployment job
-          # uses: actions/upload-artifact@v3
+        
+        - name: Set up MinGW
+          run: choco install -y mingw --version 12.2.0.03042023 --allow-downgrade && choco uninstall -y mingw && choco install -y mingw
         
         - name: Build Server
-          run: ls
-          # run: g++ -I.. -o ./bin/ws-game-server .\src\server\lib\sha1.cpp .\src\server\main.cpp -lstdc++ -lwsock32 -lWs2_32
-          #run: ./build-server.bat
+          run: g++ -I.. -o .\bin\ws-game-server .\src\server\lib\sha1.cpp .\src\server\main.cpp -lstdc++ -lwsock32 -lWs2_32
+          # run: ls
+          #run: .\build-server.bat
+
+          # - name: Upload artifact for deployment job
+          # uses: actions/upload-artifact@v3
+          
           #run: ./run-server.bat
