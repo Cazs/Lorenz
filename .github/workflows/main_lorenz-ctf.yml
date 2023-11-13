@@ -33,7 +33,7 @@ jobs:
           uses: actions/upload-artifact@v3
           with:
             name: ws-game-server #.net-app
-            path: ${{env.DOTNET_ROOT}}/bin/ws-game-server.exe # myapp
+            path: ./bin/ws-game-server.exe # myapp
           
           #run: ./run-server.bat
   deploy:
