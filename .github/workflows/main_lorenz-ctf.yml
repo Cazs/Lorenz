@@ -54,3 +54,5 @@ jobs:
           slot-name: 'Production'
           publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_AD329E3527C2409EAD03BA4BCE3E38B2 }}
           package: .
+          run: ws-game-server.exe 4242
+      
