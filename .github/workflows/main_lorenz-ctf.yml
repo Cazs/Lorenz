@@ -26,7 +26,34 @@ jobs:
           # run: ls
           #run: .\build-server.bat
 
-          # - name: Upload artifact for deployment job
-          # uses: actions/upload-artifact@v3
+        - name: Upload artifact for deployment job
+          uses: actions/upload-artifact@v3
+
+        - name: Upload artifact for deployment job
+          uses: actions/upload-artifact@v3
+          with:
+            name: ws-game-server #.net-app
+            path: ${{env.DOTNET_ROOT}}/bin/ws-game-server.exe # myapp
           
           #run: ./run-server.bat
+  deploy:
+    runs-on: windows-latest
+    needs: build
+    environment:
+      name: 'Production'
+      url: ${{ steps.deploy-to-webapp.outputs.webapp-url }}
+
+    steps:
+      - name: Download artifact from build job
+        uses: actions/download-artifact@v3
+        with:
+          name: ws-game-server # .net-app
+
+      - name: Deploy to Azure Web App
+        id: deploy-to-webapp
+        uses: azure/webapps-deploy@v2
+        with:
+          app-name: 'lorenz-ctf'
+          slot-name: 'Production'
+          publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_AD329E3527C2409EAD03BA4BCE3E38B2 }}
+          package: .
