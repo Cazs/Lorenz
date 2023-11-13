@@ -28,9 +28,6 @@ jobs:
 
         - name: Upload artifact for deployment job
           uses: actions/upload-artifact@v3
-
-        - name: Upload artifact for deployment job
-          uses: actions/upload-artifact@v3
           with:
             name: ws-game-server #.net-app
             path: ./bin/ws-game-server.exe # myapp
