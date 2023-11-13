@@ -1,31 +1,26 @@
-name: C/C++ CI
+name: Lorenz C/C++ CI
+
+# on:
+#   push:
+#       branches: [ main ]
+#   pull_request:
+#       branches: [ main ]
 
 on:
   push:
-      branches: [ main ]
-  pull_request:
-      branches: [ main ]
+    branches:
+      - main
+  workflow_dispatch:
 
 jobs:
   build-and-test:
       runs-on: windows-latest # ubuntu-latest
       steps:
-      #- uses: actions/checkout@v2
-      #- name: install cppunit
-      #run: sudo apt install -y libcppunit-dev
-      #- name: configure
-      #run: ./configure
-      #- name: make
-      #run: make
-      #- name: make test
-      #run: make test
-      - name: Set up MinGW
-        #uses: egor-tensin/setup-mingw@v2
-        # with:
-         # platform: x64
-        run: choco install -y mingw --version 12.2.0.03042023 --allow-downgrade && choco uninstall -y mingw && choco install -y mingw
+      # - name: Set up MinGW
+      #   run: choco install -y mingw --version 12.2.0.03042023 --allow-downgrade && choco uninstall -y mingw && choco install -y mingw
           
       - name: Build Server
-        run: g++ -I.. -o .\bin\ws-game-server .\src\server\lib\sha1.cpp .\src\server\main.cpp -lstdc++ -lwsock32 -lWs2_32
+        run: dir
+        # run: g++ -I.. -o ./bin/ws-game-server .\src\server\lib\sha1.cpp .\src\server\main.cpp -lstdc++ -lwsock32 -lWs2_32
         #run: ./build-server.bat
         #run: ./run-server.bat
