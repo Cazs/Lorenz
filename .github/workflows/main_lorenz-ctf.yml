@@ -26,5 +26,6 @@ jobs:
         run: choco install -y mingw --version 12.2.0.03042023 --allow-downgrade && choco uninstall -y mingw && choco install -y mingw
           
       - name: Build Server
-        run: ./build-server.bat
+        run: g++ -I.. -o .\bin\ws-game-server .\src\server\lib\sha1.cpp .\src\server\main.cpp -lstdc++ -lwsock32 -lWs2_32
+        #run: ./build-server.bat
         #run: ./run-server.bat
