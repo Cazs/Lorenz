@@ -19,12 +19,27 @@ jobs:
       #run: make
       #- name: make test
       #run: make test
-      - name: Setup MinGW
-        uses: egor-tensin/setup-mingw@latest
+      - name: Set up MinGW
+        uses: egor-tensin/setup-mingw@v2
+        with:
+          platform: x64
+          
       - name: Install GCC
         # You may pin to the exact commit or the version.
         # uses: egor-tensin/setup-gcc@eaa888eb19115a521fa72b65cd94fe1f25bbcaac
         uses: egor-tensin/setup-gcc@v1
+        with:
+          # GCC version to install
+          #version: # optional, default is latest
+          # Target platform
+          platform: x64 # optional, default is x64
+          # Install Cygwin packages
+          cygwin: 1 # optional, default is 0
+          # Set up cc/gcc/c++/g++ executables
+          #cc: # optional, default is 1
+          # On Cygwin, replace executable symlinks with hardlinks
+          #hardlinks: # optional, default is 0
+          
       - name: Build Server
         run: ./build-server.bat
         #run: ./run-server.bat
